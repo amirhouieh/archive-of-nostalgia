@@ -1,0 +1,344 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
+<head>
+	<title> archive-under </title>
+	<link rel="stylesheet" href="style-new.css" type="text/css" media="screen" charset="utf-8" />
+  <meta charset="utf-8">
+
+	<script type="text/javascript" src="csi/jquery.min.js"></script>
+	<script type="text/javascript" src="csi/jquery-ui-effects.min.js"></script>
+	<script type="text/javascript" src="DB-new.js"></script>
+
+	<script type="text/javascript">
+
+var tabindex;
+var currenttab;
+var state = true;
+var t;
+function getCurrentMenu( ) {
+	var selectedmenu = currenttab;
+	var sublist = selectedmenu.find( 'ul' );
+
+	if ( sublist.size( ) > 0 ) 
+		selectedmenu = sublist.first( );
+
+	return selectedmenu;
+}
+function dir_text(){
+	if( $( 'ul li ul' ).size( ) == 0 )
+		$('.black .dir').find('p').text( '../'+$('.selected').text() ); 
+	else
+		$('.black .dir').find('p').text( '../'+$('.parent').attr('id')+'/'+ $('.selected').find('span').text() );
+}
+
+function itemAdder(){
+	var counter=0;
+	var number_key = $('.parent').attr('id');
+	var key = $('.selected').find('span').text();
+	var columnindex = 0;
+	$.each( TAGS, function( index, item ) {
+		if ( number_key === item ) columnindex = index;
+	} );
+
+	var submenu = $( '<ul>');
+	$.each( DB2, function( index, item ) {
+		if( item[ columnindex ] === key ){
+			submenu.append( '<li id="'+index+'">[ '+counter+' ]<span>'+ DB2[index][0] + '</span></li>' );
+			counter++;
+		}
+	} );
+	$( '.nostalgy' ).empty( );
+	submenu.appendTo( '.nostalgy' );
+
+}
+function jumpUp(){
+	if ( currenttab.hasClass( 'category' )  ) {
+
+		if ( $( 'ul li ul' ).size( ) == 0 ) {
+			alert('there is no up_directory');
+		}
+		else{
+			var up_Dir = $('.parent');
+			$( 'ul li ul').remove();
+			$( '.nostalgy' ).empty( );
+			$( '*' ).removeClass('selected');
+			up_Dir.addClass('selected');
+		}
+	}
+}
+
+function moveUp( ) {
+	var selectedlist = getCurrentMenu( );
+	var end = selectedlist.children().size();
+
+	var nextIndex = $(".selected").index() - 1;
+	if ( nextIndex < 0 ) nextIndex = end - 1;
+
+	$( '*' ).removeClass( 'selected' );
+
+	selectedlist.find('li').eq(nextIndex).addClass("selected");
+
+	if ( $( 'ul li ul' ).size( ) !== 0  && currenttab.hasClass( 'category' ) ) {		//	
+		itemAdder();
+	}
+}
+function moveDown( ) {
+
+	var selectedlist = getCurrentMenu( );
+
+	var end = selectedlist.children().size();
+
+	var nextIndex = $(".selected").index() + 1;
+	if ( nextIndex == end ) nextIndex = 0;
+	$( '*' ).removeClass( 'selected' );
+	selectedlist.find('li').eq(nextIndex).addClass("selected");
+
+	if ( $( 'ul li ul' ).size( ) !== 0  && currenttab.hasClass( 'category' ) ) {		// live view
+		itemAdder();
+	}
+
+}
+function larger(c){
+	$('.w8').hide();
+	$('.large').append('<ul></ul>').show();
+	var S_index = $('.selected').attr('id');
+	var number = Number(S_index)+1;
+	$('.large').find('.image').append('<img src="img/tt/img'+number+'.jpg">').css('height', '1px');
+	$('.image').animate({height: '500px'},5000);
+	$.each( DB2[S_index], function(index, item ){
+			$('.large ul').append('<li><span>'+TAGS[index]+":</span><br>" + item + '</li><br>' ).insertAfter('.img_c');
+	});
+	state = false;
+}
+
+function ESCape(){
+	if ( state ){
+		$('.w8').hide();
+		clearTimeout( t );
+	}else{
+		$('.large').hide();
+		$('.image').find('img').remove();
+		$('.large').find('ul').remove();
+		state = true;
+
+	}
+}
+
+function selectItem( ) {
+	if ( currenttab.hasClass( 'category' )  ) {
+
+		if( $('.selected').attr('id') === 'All' ) {
+			var current = $('.selected');
+
+			var allList = $('<ul class="sag"></ul>');
+			$.each( DB2, function( index, item ) {
+				allList.append('<li id="'+index+'">['+index+']<span>'+item[0]+'</span></li>');
+			});
+			$('.nostalgy').append(allList);
+
+			selected = current;
+
+		}else if ( $( 'ul li ul' ).size( ) == 0 ) {
+
+			var current = $('.selected');
+			var subitems = [ ];
+
+			var name = current.find('span').text();
+
+			$.each( TAGS, function( index, item ) {
+				if ( item === name )
+					subitems = S_list[ name ];
+			} );
+
+			console.log( S_list );
+
+			console.log(subitems);
+			current.addClass('parent')
+				   .attr('id',name);
+			current.siblings().removeClass('parent');
+
+
+			var submenu = $( '<ul>' );
+			$.each( subitems, function( index, item ) {
+				submenu.append( '<li>[ ' + index + ' ]<span>' + item + '</span></li>' );
+			} );
+
+			submenu.appendTo( current );
+
+			$('*').removeClass('selected');
+			submenu.find( 'li:first-child' ).addClass( 'selected' );
+
+			selected = current;
+		} else {
+			itemAdder();
+			selectTab( 1 );
+			submenu.appendTo( '.nostalgy' );
+			submenu.find( 'li:first-child' ).addClass( 'selected' );
+		}
+	} else {
+
+		var text = selected.find('.selected span').text() ;
+		var columnindex = 0;
+		$('.w8').show();
+		var j=0;
+		clearTimeout( t );
+		$('.wait_bar').children().each( function(){ 
+			$(this).css({
+			'background': 'url("img/px-w.png") center repeat',
+			'background-color': ''
+			});
+		});
+
+		for(var i = 0; i < 41; i++) {
+		    t = setTimeout(function() { 
+		    	$('.wait_bar').children().eq(j).css('background', '#f7ef6f');
+			     j++; 
+		 		if( j=== 41){
+					larger(j+1);
+					state = false;
+				}
+
+			}, 200*i, i);
+
+		}
+	}
+}
+
+function selectTab( index ){
+
+	tabindex = index;
+	currenttab = $('body>ul').eq( tabindex );
+
+	$( '*' ).removeClass( 'selected' );
+	if ( tabindex === 0 )
+		currenttab.find( '>li:first-child' ).addClass( 'selected' );
+	else
+		currenttab.find( 'ul>li:first-child' ).addClass( 'selected' );		
+}
+
+
+
+function initPage(){
+
+	for( i=0; i<41; i++ )
+		$('.wait_bar').append('<div id=mem></div>');
+
+	tabindex = 0;
+	currenttab = $('body ul').eq( tabindex );
+
+
+	$('body ul').eq(tabindex).find('li').eq(0).addClass('selected');
+
+
+	$('body').on("keydown", function(e){
+
+		//Switch
+		switch( e.keyCode ) {
+			case 37:
+				tabindex = Math.abs( tabindex - 1 );
+				selectTab( tabindex );
+				dir_text();
+				
+				break;
+
+			case 39:
+				tabindex = Math.abs( tabindex - 1 );
+				selectTab( tabindex );
+				dir_text();
+
+				break;
+
+			case 38:
+				moveUp( );
+				dir_text();
+
+				break;
+
+			case 40:
+				moveDown( );
+				dir_text();
+	
+				break;
+
+			case 13:
+				selectItem( );
+				dir_text();
+
+				break;
+
+			case 8:
+				jumpUp( );
+				dir_text();
+				break;
+
+			case 27:
+				ESCape();
+
+		}
+
+
+
+	});
+
+
+}
+						
+		$( document ).ready( initPage );
+
+	</script>
+
+</head>
+
+<body>
+	<ul class="category">
+		<li id="All"><span>All</span></li>
+		<li id="Kind"><span>Kind</span></li>
+		<li id="Main_Category"><span>Main_Category</span></li>
+		<li id="Sub_Category"><span>Sub_Category</span></li>
+		<li id="Function"><span>Function_</span></li>
+		<li id="Feeling"><span>Feeling</span></li>
+		<li id="Period"><span>Period</span></li>
+	</ul>
+
+	<ul class="nostalgy"> </ul>
+	<div class="black">
+		<div class="dir">
+			<p>../</p>
+			<br><br>
+
+			<div style="clear: both; font-size: 13px;">[ 2014 ]: Amir Houieh/ KABK/ Den Haag/ Netherland </div>
+
+		</div>
+
+		<div class="nvg">
+				<p> <span>&larr;</span><span>&rarr;</span>:<span>switch tabs</span></p>
+				<p> <span>&uarr;</span><span>&darr;</span>:<span>move through items</span> </p>
+				<p> <span>&crarr;</span>:<span>enter current item</span> </p>
+				<p> <span>del</span>:<span>jump to up</span> </p>
+				<p> <span>esc</span>:<span>close window</span> </p>
+		</div>
+
+	</div>
+
+
+<!-- 	<div class="black"> [ 2014 ]: Amir Houieh/ KABK/ Den Haag/ Netherland </div>
+ -->
+	<div class="cat-head"> Categories  </div> 
+	<div class="nos-head"> Nostalgia(s)  </div> 
+	<div class="large hide">
+		<div class="img_c"><div class="image"></div></div>
+	</div>
+	<div class="w8 hide"> 
+		<div class="head"> wait </div>
+		<div class="center">
+			<div> Creating information of selected Nostalgia. Please Wait . . . </div>
+			<div class="wait_bar"></div>
+			<div style="text-align: right;"> ( Press [ESC] to stop process )</div>
+		</div>
+	</div>
+
+</body>
+
+</html>
